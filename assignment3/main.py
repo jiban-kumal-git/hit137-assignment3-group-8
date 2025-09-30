@@ -1,11 +1,10 @@
-'''
-Entry point for the app.
-This just launches the Tkinter GUI. Keep this file small and clean
-'''
+# Entry point of the application.
+# This file only imports the GUI class and starts the program.
 
-from assignment3.gui import App  # imports the App class from gui.py
+from assignment3.gui import App  # import the App class from gui.py inside assignment3
 
 def main():
+    # Create the main window and start the Tkinter event loop.
     app = App()
     app.mainloop()
 

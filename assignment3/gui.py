@@ -1,39 +1,44 @@
 """
 GUI layer for the application.
 Three tabs: App, Model Info, OOP Notes.
-App tab runs sentiment analysis via a TextModelHandler.
+App tab supports sentiment on text and classification on images.
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
+from PIL import Image, ImageTk
 
 from assignment3.model_info import MODEL_INFO
 from assignment3.oop_explain import OOP_NOTES
 from assignment3.models.text_model import TextModelHandler
+from assignment3.models.image_model import ImageModelHandler
 
 
 class App(tk.Tk):
     """
     Main Tkinter application window.
-    Holds the Notebook (tabs) and basic widgets.
+    Holds the Notebook (tabs) and UI widgets.
     """
     def __init__(self):
         super().__init__()
         self.title("HIT137 – OOP + Hugging Face")
-        self.geometry("900x600")
+        self.geometry("1000x650")
 
         # simple app state
         self.selected_input = tk.StringVar(value="text")
         self.status_text = tk.StringVar(value="Ready.")
-        self.text_handler = None  # lazy init
+        self.text_handler = None        # lazy init
+        self.image_handler = None       # lazy init
+        self._img_path = None           # selected image path
+        self._img_preview = None        # keep a reference to PhotoImage
 
         self._build_ui()
 
     def _build_ui(self):
         """
         Build the UI shell:
-        - A Notebook with three tabs (App, Model Info, OOP Notes).
-        - App tab contains input, output, and status areas.
+        - Notebook with three tabs (App, Model Info, OOP Notes).
+        - App tab contains input controls, preview, output, and status.
         """
         notebook = ttk.Notebook(self)
 
@@ -57,22 +62,30 @@ class App(tk.Tk):
 
         ttk.Label(top_row, text="Input type:").pack(side=tk.LEFT)
         ttk.Combobox(
-            top_row, state="readonly", values=["text"], width=10,
+            top_row, state="readonly", values=["text", "image"], width=10,
             textvariable=self.selected_input
         ).pack(side=tk.LEFT, padx=8)
 
+        ttk.Button(top_row, text="Open Image…", command=self._pick_image).pack(side=tk.LEFT, padx=(8, 0))
         ttk.Button(top_row, text="Run Text", command=self._run_text).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Button(top_row, text="Run Image", command=self._run_image).pack(side=tk.LEFT, padx=(8, 0))
 
         # text input group
         text_group = ttk.LabelFrame(app_container, text="Text Input", padding=8)
         text_group.pack(fill=tk.X, pady=(4, 8))
-        self.txt_input = tk.Text(text_group, height=5, wrap="word")
+        self.txt_input = tk.Text(text_group, height=6, wrap="word")
         self.txt_input.pack(fill=tk.X)
+
+        # image preview group
+        img_group = ttk.LabelFrame(app_container, text="Image Preview", padding=8)
+        img_group.pack(fill=tk.X, pady=(4, 8))
+        self.img_canvas = tk.Canvas(img_group, width=320, height=320, bg="#f0f0f0", highlightthickness=1)
+        self.img_canvas.pack()
 
         # output group
         out_group = ttk.LabelFrame(app_container, text="Output", padding=8)
         out_group.pack(fill=tk.BOTH, expand=True, pady=8)
-        self.output = tk.Text(out_group, height=14, wrap="word")
+        self.output = tk.Text(out_group, height=12, wrap="word")
         self.output.pack(fill=tk.BOTH, expand=True)
 
         # status row
@@ -94,7 +107,7 @@ class App(tk.Tk):
         container.pack(fill=tk.BOTH, expand=True)
 
         ttk.Label(container, text="Model Info", font=("Segoe UI", 12, "bold")).pack(anchor="w")
-        text = tk.Text(container, wrap="word", height=18)
+        text = tk.Text(container, wrap="word", height=20)
         text.pack(fill=tk.BOTH, expand=True, pady=8)
 
         # build readable lines from MODEL_INFO
@@ -119,12 +132,21 @@ class App(tk.Tk):
         container.pack(fill=tk.BOTH, expand=True)
 
         ttk.Label(container, text="OOP Notes", font=("Segoe UI", 12, "bold")).pack(anchor="w")
-        text = tk.Text(container, wrap="word", height=18)
+        text = tk.Text(container, wrap="word", height=20)
         text.pack(fill=tk.BOTH, expand=True, pady=8)
         text.insert("end", OOP_NOTES)
         text.configure(state="disabled")
 
     # ------------------------- actions ---------------------------------------
+
+    def _set_output(self, content: str):
+        """
+        Replace the Output text area with new content.
+        """
+        self.output.delete("1.0", "end")
+        self.output.insert("end", content)
+
+    # ----- text pipeline -----------------------------------------------------
 
     def _ensure_text_handler(self):
         """
@@ -142,24 +164,71 @@ class App(tk.Tk):
         """
         Pull text from input, run sentiment, and print formatted output.
         """
-        text = self.txt_input.get("1.0", "end").strip()
-        if not text:
+        content = self.txt_input.get("1.0", "end").strip()
+        if not content:
             messagebox.showwarning("Input required", "Enter some text for analysis.")
             return
         try:
             self._ensure_text_handler()
             self.status_text.set("Running sentiment…")
             self.update_idletasks()
-            result = self.text_handler.process(text)
+            result = self.text_handler.process(content)
             self._set_output(result)
             self.status_text.set("Done.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
             self.status_text.set("Failed. See console for details.")
 
-    def _set_output(self, content: str):
+    # ----- image pipeline ----------------------------------------------------
+
+    def _ensure_image_handler(self):
         """
-        Replace the Output text area with new content.
+        Lazily construct the image model handler.
+        First call may download model weights.
         """
-        self.output.delete("1.0", "end")
-        self.output.insert("end", content)
+        if self.image_handler is None:
+            model_id = MODEL_INFO["image"]["id"]
+            self.status_text.set("Preparing image model… first run may download weights.")
+            self.update_idletasks()
+            self.image_handler = ImageModelHandler(model_id)
+            self.status_text.set("Image model ready.")
+
+    def _pick_image(self):
+        """
+        Open a file dialog, load and preview the image on the canvas.
+        """
+        path = filedialog.askopenfilename(
+            title="Select image",
+            filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif"), ("All files", "*.*")]
+        )
+        if not path:
+            return
+        self._img_path = path
+        try:
+            img = Image.open(path).convert("RGB")
+            img.thumbnail((320, 320))
+            self._img_preview = ImageTk.PhotoImage(img)
+            self.img_canvas.delete("all")
+            self.img_canvas.create_image(160, 160, image=self._img_preview)
+            self.status_text.set(f"Selected: {path}")
+        except Exception as e:
+            messagebox.showerror("Image error", str(e))
+            self.status_text.set("Failed to load image.")
+
+    def _run_image(self):
+        """
+        Classify the selected image and display the top label.
+        """
+        if not self._img_path:
+            messagebox.showwarning("No image", "Choose an image first (Open Image…).")
+            return
+        try:
+            self._ensure_image_handler()
+            self.status_text.set("Running image classification…")
+            self.update_idletasks()
+            result = self.image_handler.process(self._img_path)
+            self._set_output(result)
+            self.status_text.set("Done.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            self.status_text.set("Failed. See console for details.")

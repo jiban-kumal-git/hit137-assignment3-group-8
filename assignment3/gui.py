@@ -80,7 +80,7 @@ class App(tk.Tk):
         status_row.pack(fill=tk.X, pady=(6, 0))
         ttk.Label(status_row, textvariable=self.status_text, anchor="w").pack(side=tk.LEFT)
 
-        # --- Model Info tab ---------------------------------------------------
+        # --- Model Info tab  ---------------------------------------------------
         self._build_info_tab(self.tab_models)
 
         # --- OOP Notes tab ----------------------------------------------------

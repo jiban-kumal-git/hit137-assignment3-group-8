@@ -20,8 +20,8 @@ class App(tk.Tk):
     """
     def __init__(self):
         super().__init__()
-        self.title("HIT137 – OOP + Hugging Face")
-        self.geometry("1000x650")
+        self.title("TKinter AI GUI")
+        self.geometry("1000x800")
 
         # simple state
         self.selected_input = tk.StringVar(value="text")
@@ -56,13 +56,13 @@ class App(tk.Tk):
         top_row = ttk.Frame(app_container)
         top_row.pack(fill=tk.X, pady=(0, 8))
 
-        ttk.Label(top_row, text="Input type:").pack(side=tk.LEFT)
+        ttk.Label(top_row, text="Model type:").pack(side=tk.LEFT)
         ttk.Combobox(
             top_row, state="readonly", values=["text", "image"], width=10,
             textvariable=self.selected_input
         ).pack(side=tk.LEFT, padx=8)
 
-        ttk.Button(top_row, text="Open Image…", command=self._pick_image).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Button(top_row, text="Browse", command=self._pick_image).pack(side=tk.LEFT, padx=(8, 0))
         ttk.Button(top_row, text="Run Text", command=self._run_text).pack(side=tk.LEFT, padx=(8, 0))
         ttk.Button(top_row, text="Run Image", command=self._run_image).pack(side=tk.LEFT, padx=(8, 0))
 

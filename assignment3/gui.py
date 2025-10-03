@@ -67,24 +67,18 @@ class App(tk.Tk):
         )
         modelComboBox.pack(side=tk.LEFT, padx=8)
 
-        value = ""
-        if modelComboBox:
-            value = modelComboBox.get()
-        else:
-            value = ""
-
         ttk.Button(top_row, text="Browse", command=self._pick_image).pack(
             side=tk.LEFT, padx=(8, 0)
         )
         ttk.Button(
-            top_row, text="Run Model", command=lambda: self._run_model(value)
+            top_row, text="Run Model", command=lambda: self._run_model(self.selected_input.get())
         ).pack(side=tk.LEFT, padx=(8, 0))
 
         # Text input area
         text_group = ttk.LabelFrame(app_container, text="Text Input", padding=8)
-        text_group.pack(fill=tk.X, pady=(4, 8))
-        self.txt_input = tk.Text(text_group, height=6, wrap="word")
-        self.txt_input.pack(fill=tk.X)
+        ttk.Button(
+            top_row, text="Run Model", command=self._run_model
+        ).pack(side=tk.LEFT, padx=(8, 0))
 
         # Image preview area
         img_group = ttk.LabelFrame(app_container, text="Image Preview", padding=8)
@@ -262,5 +256,5 @@ class App(tk.Tk):
         """
         if self.selected_input.get() == "Text Model":
             self._run_text()
-        if self.selected_input.get() == "Image Model":
+        elif self.selected_input.get() == "Image Model":
             self._run_image()

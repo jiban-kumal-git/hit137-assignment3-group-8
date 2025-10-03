@@ -5,7 +5,7 @@ import time
 def time_logger(func):
     def wrapper(*args, **kwargs):
         t0 = time.time()
-        r = func(*args, **kwargs)
+        r = func(*args, **kwargs) # execute function
         print(f"[text time] {func.__name__} took {time.time()-t0:.3f}s")
         return r
     return wrapper
@@ -13,7 +13,7 @@ def time_logger(func):
 # It is used to prints the prediction result for debugging
 def result_logger(func):
     def wrapper(*args, **kwargs):
-        r = func(*args, **kwargs)
+        r = func(*args, **kwargs) # execute function
         print(f"[text result] {r}")
         return r
     return wrapper
@@ -55,3 +55,4 @@ class TextModel(ModelBase):
 
         res = self._pipe(text)
         return [(r["label"], float(r["score"])) for r in res]
+

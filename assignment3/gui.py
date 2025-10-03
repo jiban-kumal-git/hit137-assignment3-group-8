@@ -18,20 +18,26 @@ class App(tk.Tk):
     """
     Main Tkinter window with a Notebook and action handlers.
     """
+
     def __init__(self):
         super().__init__()
         self.title("Group Project Using LLM")
         self.geometry("1000x800")
 
         # simple state
-        self.selected_input = tk.StringVar(value="text")
+        self.selected_input = tk.StringVar(value="Text Model")
         self.status_text = tk.StringVar(value="Ready.")
-        self.text_handler = None         # created lazily
-        self.image_handler = None        # created lazily
-        self._img_path = None            # selected image path
-        self._img_preview = None         # reference to PhotoImage (avoid GC)
+        self.text_handler = None  # created lazily
+        self.image_handler = None  # created lazily
+        self._img_path = None  # selected image path
+        self._img_preview = None
 
         self._build_ui()
+    
+    # def _on_option_change(self, event):
+    #     self.selected_input = tk.StringVar(value=event.widget.get())
+    #     pass
+        
 
     def _build_ui(self):
         """
@@ -57,14 +63,27 @@ class App(tk.Tk):
         top_row.pack(fill=tk.X, pady=(0, 8))
 
         ttk.Label(top_row, text="Model type:").pack(side=tk.LEFT)
-        ttk.Combobox(
-            top_row, state="readonly", values=["Test Model", "Image Model"], width=10,
-            textvariable=self.selected_input
-        ).pack(side=tk.LEFT, padx=8)
-
-        ttk.Button(top_row, text="Browse", command=self._pick_image).pack(side=tk.LEFT, padx=(8, 0))
-        ttk.Button(top_row, text="Run Text", command=self._run_text).pack(side=tk.LEFT, padx=(8, 0))
-        ttk.Button(top_row, text="Run Image", command=self._run_image).pack(side=tk.LEFT, padx=(8, 0))
+        modelComboBox = ttk.Combobox(
+            top_row,
+            state="readonly",
+            values=["Text Model", "Image Model"],
+            width=10,
+            textvariable=self.selected_input,
+        )
+        modelComboBox.pack(side=tk.LEFT, padx=8)
+        # modelComboBox.bind("<<ComboboxSelected>>", self._on_option_change)
+        value = ""
+        if modelComboBox:
+            value = modelComboBox.get()
+        else:
+            value = ''
+            
+        ttk.Button(top_row, text="Browse", command=self._pick_image).pack(
+            side=tk.LEFT, padx=(8, 0)
+        )
+        ttk.Button(top_row, text="Run Model", command= lambda: self._run_model(value)).pack(
+            side=tk.LEFT, padx=(8, 0)
+        )
 
         # text input
         text_group = ttk.LabelFrame(app_container, text="Text Input", padding=8)
@@ -75,7 +94,9 @@ class App(tk.Tk):
         # image preview
         img_group = ttk.LabelFrame(app_container, text="Image Preview", padding=8)
         img_group.pack(fill=tk.X, pady=(4, 8))
-        self.img_canvas = tk.Canvas(img_group, width=320, height=320, bg="#f0f0f0", highlightthickness=1)
+        self.img_canvas = tk.Canvas(
+            img_group, width=320, height=320, bg="#f0f0f0", highlightthickness=1
+        )
         self.img_canvas.pack()
 
         # output area
@@ -87,7 +108,9 @@ class App(tk.Tk):
         # status
         status_row = ttk.Frame(app_container)
         status_row.pack(fill=tk.X, pady=(6, 0))
-        ttk.Label(status_row, textvariable=self.status_text, anchor="w").pack(side=tk.LEFT)
+        ttk.Label(status_row, textvariable=self.status_text, anchor="w").pack(
+            side=tk.LEFT
+        )
 
         # ---- Model Info tab --------------------------------------------------
         self._build_info_tab(self.tab_models)
@@ -102,7 +125,9 @@ class App(tk.Tk):
         container = ttk.Frame(parent, padding=12)
         container.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(container, text="Model Info", font=("Segoe UI", 12, "bold")).pack(anchor="w")
+        ttk.Label(container, text="Model Info", font=("Segoe UI", 12, "bold")).pack(
+            anchor="w"
+        )
         text = tk.Text(container, wrap="word", height=20)
         text.pack(fill=tk.BOTH, expand=True, pady=8)
 
@@ -126,7 +151,9 @@ class App(tk.Tk):
         container = ttk.Frame(parent, padding=12)
         container.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(container, text="OOP Notes", font=("Segoe UI", 12, "bold")).pack(anchor="w")
+        ttk.Label(container, text="OOP Notes", font=("Segoe UI", 12, "bold")).pack(
+            anchor="w"
+        )
         text = tk.Text(container, wrap="word", height=20)
         text.pack(fill=tk.BOTH, expand=True, pady=8)
         text.insert("end", OOP_NOTES)
@@ -149,7 +176,9 @@ class App(tk.Tk):
         """
         if self.text_handler is None:
             model_id = MODEL_INFO["text"]["id"]
-            self.status_text.set("Preparing text model… first run may download weights.")
+            self.status_text.set(
+                "Preparing text model… first run may download weights."
+            )
             self.update_idletasks()
             self.text_handler = TextModelHandler(model_id)
             self.status_text.set("Text model ready.")
@@ -181,7 +210,9 @@ class App(tk.Tk):
         """
         if self.image_handler is None:
             model_id = MODEL_INFO["image"]["id"]
-            self.status_text.set("Preparing image model… first run may download weights.")
+            self.status_text.set(
+                "Preparing image model… first run may download weights."
+            )
             self.update_idletasks()
             self.image_handler = ImageModelHandler(model_id)
             self.status_text.set("Image model ready.")
@@ -192,7 +223,10 @@ class App(tk.Tk):
         """
         path = filedialog.askopenfilename(
             title="Select image",
-            filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif"), ("All files", "*.*")]
+            filetypes=[
+                ("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif"),
+                ("All files", "*.*"),
+            ],
         )
         if not path:
             return
@@ -225,3 +259,11 @@ class App(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", str(e))
             self.status_text.set("Failed. See console for details.")
+
+    def _run_model(self, data):
+        if self.selected_input.get() == "Text Model":
+            self._run_text()
+
+        if self.selected_input.get() == "Image Model":
+            self._run_image()
+        pass

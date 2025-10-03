@@ -24,14 +24,19 @@ class App(tk.Tk):
         self.geometry("1000x800")
 
         # simple state
-        self.selected_input = tk.StringVar(value="text")
-        self.status_text = tk.StringVar(value="Ready.")
-        self.text_handler = None         # created lazily
-        self.image_handler = None        # created lazily
-        self._img_path = None            # selected image path
-        self._img_preview = None         # reference to PhotoImage (avoid GC)
+        self.selected_input = tk.StringVar(value="Text Model")  # Tracks selected model type
+        self.status_text = tk.StringVar(value="Ready.")         # Status bar text
+        self.text_handler = None  # created lazily
+        self.image_handler = None  # created lazily
+        self._img_path = None  # selected image path
+        self._img_preview = None  # image preview for canvas
 
-        self._build_ui()
+        self._build_ui()  # Build the UI
+    
+    # def _on_option_change(self, event):
+    #     self.selected_input = tk.StringVar(value=event.widget.get())
+    #     pass
+        
 
     def _build_ui(self):
         """
@@ -39,6 +44,7 @@ class App(tk.Tk):
         """
         notebook = ttk.Notebook(self)
 
+        # Create tabs
         self.tab_app = ttk.Frame(notebook)
         self.tab_models = ttk.Frame(notebook)
         self.tab_oop = ttk.Frame(notebook)
@@ -52,7 +58,7 @@ class App(tk.Tk):
         app_container = ttk.Frame(self.tab_app, padding=12)
         app_container.pack(fill=tk.BOTH, expand=True)
 
-        # top controls
+        # Top controls row
         top_row = ttk.Frame(app_container)
         top_row.pack(fill=tk.X, pady=(0, 8))
 
@@ -66,25 +72,25 @@ class App(tk.Tk):
         ttk.Button(top_row, text="Run Text", command=self._run_text).pack(side=tk.LEFT, padx=(8, 0))
         ttk.Button(top_row, text="Run Image", command=self._run_image).pack(side=tk.LEFT, padx=(8, 0))
 
-        # text input
+        # Text input area
         text_group = ttk.LabelFrame(app_container, text="Text Input", padding=8)
         text_group.pack(fill=tk.X, pady=(4, 8))
         self.txt_input = tk.Text(text_group, height=6, wrap="word")
         self.txt_input.pack(fill=tk.X)
 
-        # image preview
+        # Image preview area
         img_group = ttk.LabelFrame(app_container, text="Image Preview", padding=8)
         img_group.pack(fill=tk.X, pady=(4, 8))
         self.img_canvas = tk.Canvas(img_group, width=320, height=320, bg="#f0f0f0", highlightthickness=1)
         self.img_canvas.pack()
 
-        # output area
+        # Output area
         out_group = ttk.LabelFrame(app_container, text="Output", padding=8)
         out_group.pack(fill=tk.BOTH, expand=True, pady=8)
         self.output = tk.Text(out_group, height=12, wrap="word")
         self.output.pack(fill=tk.BOTH, expand=True)
 
-        # status
+        # Status bar
         status_row = ttk.Frame(app_container)
         status_row.pack(fill=tk.X, pady=(6, 0))
         ttk.Label(status_row, textvariable=self.status_text, anchor="w").pack(side=tk.LEFT)
@@ -106,6 +112,7 @@ class App(tk.Tk):
         text = tk.Text(container, wrap="word", height=20)
         text.pack(fill=tk.BOTH, expand=True, pady=8)
 
+        # Display model info from MODEL_INFO
         lines = []
         t = MODEL_INFO.get("text", {})
         i = MODEL_INFO.get("image", {})
@@ -225,3 +232,15 @@ class App(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", str(e))
             self.status_text.set("Failed. See console for details.")
+
+    def _run_model(self, data):
+        """
+        Run the selected model (text or image) based on user selection.
+        """
+        if self.selected_input.get() == "Text Model":
+            self._run_text()
+
+        if self.selected_input.get() == "Image Model":
+            self._run_image()
+        pass
+

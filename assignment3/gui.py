@@ -20,7 +20,7 @@ class App(tk.Tk):
     """
     def __init__(self):
         super().__init__()
-        self.title("TKinter AI GUI")
+        self.title("Group Project Using LLM")
         self.geometry("1000x800")
 
         # simple state
@@ -58,7 +58,7 @@ class App(tk.Tk):
 
         ttk.Label(top_row, text="Model type:").pack(side=tk.LEFT)
         ttk.Combobox(
-            top_row, state="readonly", values=["text", "image"], width=10,
+            top_row, state="readonly", values=["Test Model", "Image Model"], width=10,
             textvariable=self.selected_input
         ).pack(side=tk.LEFT, padx=8)
 

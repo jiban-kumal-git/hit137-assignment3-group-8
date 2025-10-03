@@ -5,17 +5,17 @@ import time
 def time_logger(func):
     def wrapper(*args, **kwargs):
         t0 = time.time()  # Record start time
-        r = func(*args, **kwargs)  # Execute the function
+        result = func(*args, **kwargs)  # Execute the function
         print(f"[text time] {func.__name__} took {time.time()-t0:.3f}s")  # Print elapsed time
-        return r  # Return the result
+        return result  # Return the result
     return wrapper
 
 # This decorator prints the prediction result for debugging
 def result_logger(func):
     def wrapper(*args, **kwargs):
-        r = func(*args, **kwargs)  # Execute the function
-        print(f"[text result] {r}")  # Print the result
-        return r  # Return the result
+        result = func(*args, **kwargs)  # Execute the function
+        print(f"[text result] {result}")  # Print the result
+        return result  # Return the result
     return wrapper
 
 class ModelBase:
@@ -55,4 +55,4 @@ class TextModel(ModelBase):
         # Run the Hugging Face text classification model
         res = self._pipe(text)
         # Extract label and score from each result
-        return [(r["label"], float(r["score"])) for r in res]
+        return [(prediction["label"], float(prediction["score"])) for prediction in res]

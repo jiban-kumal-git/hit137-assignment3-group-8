@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from assignment3.utils.decorators import log_call, timeit
 from assignment3.utils.mixins import LoggingMixin, ErrorHandlingMixin
 
+
 class ModelHandlerBase(ABC, LoggingMixin, ErrorHandlingMixin):
     def __init__(self, model_id: str):
         # Private attributes (encapsulation).
@@ -28,14 +29,17 @@ class ModelHandlerBase(ABC, LoggingMixin, ErrorHandlingMixin):
         ...
 
     @abstractmethod
-    def _format_output(self, raw_output):
+    def _format_output(self, raw_output) -> str:
         # Subclasses convert raw outputs to a display string.
         ...
-
+        
+    
     @log_call
     @timeit
     def process(self, input_data):
         # Default process flow; can be overridden by subclasses.
         pipe = self._get_pipeline()
-        raw = pipe(input_data)
-        return self._format_output(raw)
+        if pipe:
+            raw = pipe(input_data)
+            return self._format_output(raw)
+        return "Invalid Input Data"

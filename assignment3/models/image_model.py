@@ -41,5 +41,7 @@ class ImageModelHandler(ModelHandlerBase):
             raise TypeError("Unsupported input for image model. Provide a file path or PIL.Image.Image.")
 
         pipe = self._get_pipeline()
-        raw = pipe(img)  # returns list of {label, score}
-        return self._format_output(raw)
+        if pipe:
+            raw = pipe(img)  # returns list of {label, score}
+            return self._format_output(raw)
+        return "Empty Input Data"
